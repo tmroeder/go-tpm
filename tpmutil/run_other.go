@@ -42,14 +42,62 @@ func OpenTPM(path string) (io.ReadWriteCloser, error) {
 		}
 		rwc = io.ReadWriteCloser(f)
 	} else if fi.Mode()&os.ModeSocket != 0 {
-		uc, err := net.DialUnix("unix", nil, &net.UnixAddr{Name: path, Net: "unix"})
-		if err != nil {
-			return nil, err
-		}
-		rwc = io.ReadWriteCloser(uc)
+		rwc = NewEmulatorReadWriteCloser(&net.UnixAddr{Name: path, Net: "unix"})
 	} else {
 		return nil, fmt.Errorf("unsupported TPM file mode %s", fi.Mode().String())
 	}
 
 	return rwc, nil
+}
+
+// EmulatorReadWriteCloser manages connections with a TPM emulator over a Unix
+// domain socket. These emulators often operate in a write/read/disconnect
+// sequence, so the Write method always connects, and the Read method always
+// closes. EmulatorReadWriteCloser is not thread safe.
+type EmulatorReadWriteCloser struct {
+	addr *net.UnixAddr
+	conn *net.UnixConn
+}
+
+// NewEmulatorReadWriteCloser stores information about a Unix domain socket to
+// write to and read from.
+func NewEmulatorReadWriteCloser(addr *net.UnixAddr) *EmulatorReadWriteCloser {
+	return &EmulatorReadWriteCloser{
+		addr: addr,
+	}
+}
+
+// Read implements io.Reader by reading from the Unix domain socket and closing
+// it.
+func (erw *EmulatorReadWriteCloser) Read(p []byte) (n int, err error) {
+	// Read is always the second operation in a Write/Read sequence.
+	if erw.conn == nil {
+		return 0, fmt.Errorf("Must call Write then Read in an alternating sequence")
+	}
+	n, err = erw.conn.Read(p)
+	erw.conn.Close()
+	erw.conn = nil
+	return
+}
+
+// Write implements io.Writer by connecting to the Unix domain socket and
+// writing.
+func (erw *EmulatorReadWriteCloser) Write(p []byte) (n int, err error) {
+	if erw.conn != nil {
+		return 0, fmt.Errorf("Must call Write then Read in an alternating sequence")
+	}
+	erw.conn, err = net.DialUnix("unix", nil, erw.addr)
+	if err != nil {
+		return 0, err
+	}
+	n, err = erw.conn.Write(p)
+	return
+}
+
+// Close implements io.Closer by closing the Unix domain socket if one is open.
+func (erw *EmulatorReadWriteCloser) Close() error {
+	if erw.conn == nil {
+		return fmt.Errorf("Cannot call Close when no connection is open")
+	}
+	return erw.conn.Close()
 }

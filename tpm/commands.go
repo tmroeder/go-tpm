@@ -51,8 +51,8 @@ func oiap(rw io.ReadWriter) (*oiapResponse, error) {
 	return &resp, nil
 }
 
-// osap sends an OSAPCommand to the TPM and gets back authentication
-// information in an OSAPResponse.
+// osap sends an OSAP command to the TPM and gets back authentication
+// information in an osapResponse.
 func osap(rw io.ReadWriter, osap *osapCommand) (*osapResponse, error) {
 	in := []interface{}{osap}
 	var resp osapResponse
@@ -363,4 +363,17 @@ func pcrReset(rw io.ReadWriter, pcrs *pcrSelection) error {
 		return err
 	}
 	return nil
+}
+
+func createEndorsementKeyPair(rw io.ReadWriter, antiReplay nonce, params keyParams) (*pubKey, digest, uint32, error) {
+	in := []interface{}{antiReplay, params}
+	var pk pubKey
+	var d digest
+	out := []interface{}{&pk, &d}
+	ret, err := submitTPMRequest(rw, tagRQUCommand, ordCreateEndorsementKeyPair, in, out)
+	if err != nil {
+		return nil, d, 0, err
+	}
+
+	return &pk, d, ret, nil
 }
