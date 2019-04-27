@@ -1254,6 +1254,55 @@ func ForceClear(rw io.ReadWriter) error {
 	in := []interface{}{}
 	out := []interface{}{}
 	_, err := submitTPMRequest(rw, tagRQUCommand, ordForceClear, in, out)
+	return err
+}
+
+// CreateEndorsementKeyPair creates an Endorsement Key (EK) in the TPM if one
+// is not already installed. An EK must have been created before TakeOwnership
+// is called. This function always creates a 2048-bit RSA key.
+func CreateEndorsementKeyPair(rw io.ReadWriter) ([]byte, error) {
+	var n nonce
+	if _, err := rand.Read(n[:]); err != nil {
+		return nil, err
+	}
+
+	rp := rsaKeyParams{
+		KeyLength: 2048,
+		NumPrimes: 2,
+	}
+	rpPacked, err := tpmutil.Pack(&rp)
+	if err != nil {
+		return nil, err
+	}
+
+	kp := keyParams{
+		AlgID:     algRSA,
+		EncScheme: esRSAEsOAEPSHA1MGF1,
+		SigScheme: ssRSASaPKCS1v15SHA1,
+		Params:    rpPacked,
+	}
+
+	pk, d, _, err := createEndorsementKeyPair(rw, n, kp)
+	if err != nil {
+		return nil, err
+	}
+
+	// Recompute the hash of the pk and the nonce to defend against replay
+	// attacks.
+	b, err := tpmutil.Pack(pk, n)
+	if err != nil {
+		return nil, err
+	}
+
+	s := sha1.Sum(b)
+	// There's no need for constant-time comparison of these hash values,
+	// since no secret is involved.
+	if !bytes.Equal(s[:], d[:]) {
+		return nil, errors.New("the CreateEndorsementKeyPair operation failed the replay check")
+	}
+
+	return tpmutil.Pack(pk)
+}
 
 // Startup starts a TPM. This is not necessary for hardware TPMs, but it is
 // sometimes needed for software emulators.

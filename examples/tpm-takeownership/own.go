@@ -38,6 +38,19 @@ func main() {
 		return
 	}
 
+	// Make sure the TPM has an EK.
+	pubEK, err := tpm.CreateEndorsementKeyPair(rwc)
+
+	// CreateEndorsementKey returns ErrDisabledCmd when there is already an
+	// endorsement key.
+	if err == tpm.ErrDisabledCmd {
+		pubEK, err = tpm.ReadPubEK(rwc)
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Couldn't create or read the endorsement key: %s\n", err)
+		return
+	}
+
 	// Compute the auth values as needed.
 	var ownerAuth [20]byte
 	ownerInput := os.Getenv(ownerAuthEnvVar)
@@ -51,12 +64,6 @@ func main() {
 	if srkInput != "" {
 		sa := sha1.Sum([]byte(srkInput))
 		copy(srkAuth[:], sa[:])
-	}
-
-	pubEK, err := tpm.ReadPubEK(rwc)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't read the endorsement key: %s\n", err)
-		return
 	}
 
 	if err := tpm.TakeOwnership(rwc, ownerAuth, srkAuth, pubEK); err != nil {
