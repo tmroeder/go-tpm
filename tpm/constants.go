@@ -29,31 +29,33 @@ const (
 
 // Supported TPM operations.
 const (
-	ordOIAP                 uint32 = 0x0000000A
-	ordOSAP                 uint32 = 0x0000000B
-	ordTakeOwnership        uint32 = 0x0000000D
-	ordExtend               uint32 = 0x00000014
-	ordPCRRead              uint32 = 0x00000015
-	ordQuote                uint32 = 0x00000016
-	ordSeal                 uint32 = 0x00000017
-	ordUnseal               uint32 = 0x00000018
-	ordCreateWrapKey        uint32 = 0x0000001F
-	ordGetPubKey            uint32 = 0x00000021
-	ordSign                 uint32 = 0x0000003C
-	ordQuote2               uint32 = 0x0000003E
-	ordResetLockValue       uint32 = 0x00000040
-	ordLoadKey2             uint32 = 0x00000041
-	ordGetRandom            uint32 = 0x00000046
-	ordOwnerClear           uint32 = 0x0000005B
-	ordForceClear           uint32 = 0x0000005D
-	ordGetCapability        uint32 = 0x00000065
-	ordMakeIdentity         uint32 = 0x00000079
-	ordActivateIdentity     uint32 = 0x0000007A
-	ordReadPubEK            uint32 = 0x0000007C
-	ordOwnerReadInternalPub uint32 = 0x00000081
-	ordFlushSpecific        uint32 = 0x000000BA
-	ordPcrReset             uint32 = 0x000000C8
-	ordNVReadValue          uint32 = 0x000000CF
+	ordOIAP                     uint32 = 0x0000000A
+	ordOSAP                     uint32 = 0x0000000B
+	ordTakeOwnership            uint32 = 0x0000000D
+	ordExtend                   uint32 = 0x00000014
+	ordPCRRead                  uint32 = 0x00000015
+	ordQuote                    uint32 = 0x00000016
+	ordSeal                     uint32 = 0x00000017
+	ordUnseal                   uint32 = 0x00000018
+	ordCreateWrapKey            uint32 = 0x0000001F
+	ordGetPubKey                uint32 = 0x00000021
+	ordSign                     uint32 = 0x0000003C
+	ordQuote2                   uint32 = 0x0000003E
+	ordResetLockValue           uint32 = 0x00000040
+	ordLoadKey2                 uint32 = 0x00000041
+	ordGetRandom                uint32 = 0x00000046
+	ordOwnerClear               uint32 = 0x0000005B
+	ordForceClear               uint32 = 0x0000005D
+	ordGetCapability            uint32 = 0x00000065
+	ordCreateEndorsementKeyPair uint32 = 0x00000078
+	ordMakeIdentity             uint32 = 0x00000079
+	ordActivateIdentity         uint32 = 0x0000007A
+	ordReadPubEK                uint32 = 0x0000007C
+	ordStartup                  uint32 = 0x00000099
+	ordOwnerReadInternalPub     uint32 = 0x00000081
+	ordFlushSpecific            uint32 = 0x000000BA
+	ordPcrReset                 uint32 = 0x000000C8
+	ordNVReadValue              uint32 = 0x000000CF
 )
 
 // Capability types.
@@ -160,6 +162,16 @@ const (
 	authNever       byte = 0x00
 	authAlways      byte = 0x01
 	authPrivUseOnly byte = 0x03
+)
+
+type StartupMode uint16
+
+// The startup modes for the Startup command.
+const (
+	_ StartupMode = iota
+	StartupClear
+	StartupWithState
+	StartupDeactivated
 )
 
 // fixedQuote is the fixed constant string used in quoteInfo.

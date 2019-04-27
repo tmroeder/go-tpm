@@ -40,7 +40,7 @@ const (
 	errClearDisabled
 	errDeactivated
 	errDisabled
-	errDisabledCmd
+	ErrDisabledCmd
 	errFail
 	errBadOrdinal
 	errInstallDisabled
@@ -142,7 +142,7 @@ var tpmErrMsgs = map[tpmError]string{
 	errClearDisabled:         "the clear disable flag is set and all clear operations now require physical access",
 	errDeactivated:           "the TPM is deactivated",
 	errDisabled:              "the TPM is disabled",
-	errDisabledCmd:           "the target command has been disabled",
+	ErrDisabledCmd:           "the target command has been disabled",
 	errFail:                  "the operation failed",
 	errBadOrdinal:            "the ordinal was unknown or inconsistent",
 	errInstallDisabled:       "the ability to install an owner is disabled",

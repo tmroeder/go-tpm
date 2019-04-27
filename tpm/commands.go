@@ -51,8 +51,8 @@ func oiap(rw io.ReadWriter) (*oiapResponse, error) {
 	return &resp, nil
 }
 
-// osap sends an OSAPCommand to the TPM and gets back authentication
-// information in an OSAPResponse.
+// osap sends an OSAP command to the TPM and gets back authentication
+// information in an osapResponse.
 func osap(rw io.ReadWriter, osap *osapCommand) (*osapResponse, error) {
 	in := []interface{}{osap}
 	var resp osapResponse
